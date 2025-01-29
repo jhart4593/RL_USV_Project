@@ -1,0 +1,8 @@
+*runs/
+*wandb/
+**__pycache__/
+*.vscode/
+*models/
+*final_model/
+*model_logs/
+

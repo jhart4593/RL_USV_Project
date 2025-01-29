@@ -1,0 +1,8 @@
+numpy
+matplotlib
+mpl_toolkits.mplot3d
+stable-baselines3
+tensorboard
+torch
+wandb
+gymnasium
