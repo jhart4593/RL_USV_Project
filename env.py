@@ -12,6 +12,7 @@ from config import config
 from rewards import get_rewards
 from otter import otter
 from utils import get_obs, get_obs_norm, PID
+from fossen_gnc import ssa
 
 
 class USVEnv(gym.Env):
@@ -124,9 +125,11 @@ class USVEnv(gym.Env):
         self.episode_reward = 0
         self.yaw_e = 0
         self.prop_act = 0
+        self.time_pen = 0
         self.yaw_e_ep = 0
         self.prop_act_ep = 0
-
+        self.time_pen_ep = 0
+        
         # terminate criteria counter --> holds target course for x seconds
         self.course_hold = 0
 
@@ -156,10 +159,12 @@ class USVEnv(gym.Env):
         self.episode_reward = self.reward_sum
         self.yaw_e_ep = self.yaw_e
         self.prop_act_ep = self.prop_act
+        self.time_pen_ep = self.time_pen
 
         self.reward_sum = 0
         self.yaw_e = 0
         self.prop_act = 0
+        self.time_pen = 0
 
         # set constant surge control input
         self.tau_X = self.cfg["tau_X"]
@@ -183,7 +188,7 @@ class USVEnv(gym.Env):
         self.simData = np.array(list(self.eta) + list(self.nu) + list(self.u_control) + list(self.u_actual) + [self.t])
 
         # reset other values
-        self.yaw_err = [0,0,(self.target_course - self.eta[5])]
+        self.yaw_err = [0,0,ssa(self.target_course - self.eta[5])]
         self.tau_N = 0
 
         # determine observation from initial state
@@ -232,7 +237,7 @@ class USVEnv(gym.Env):
         )
 
         # Add to yaw error list, iterate course hold counter if holding
-        self.yaw_err.append(self.target_course - self.eta[5])
+        self.yaw_err.append(ssa(self.target_course - self.eta[5]))
 
         if abs(self.yaw_err[-1]) <= self.cfg["angle_error_lim"]:
             self.course_hold += 1
@@ -255,11 +260,13 @@ class USVEnv(gym.Env):
         self.reward_sum += reward
         self.yaw_e += indiv_rew_terms[0]
         self.prop_act += indiv_rew_terms[1]
+        self.time_pen += indiv_rew_terms[2]
 
         wandb.log({"train/reward":self.reward_sum})
         wandb.log({"train/episode_return":self.episode_reward})
         wandb.log({"reward/yaw_err":self.yaw_e_ep})
         wandb.log({"reward/prop_act":self.prop_act_ep})
+        wandb.log({"reward/time_pen":self.time_pen_ep})
         
         # set terminated criteria - if reached desired course angle or hold course angle for desired amount of time
         terminated = False

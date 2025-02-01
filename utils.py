@@ -12,10 +12,14 @@ def PID(action, Tn, yaw_err):
     by the P,I, and D coefficients respectively.
     """
 
-    # rudder PID controller
+    #PID controller
     kp = action[0]
     ki = action[1]
     kd = action[2]
+
+    # kp = e_cfg["PID_fixed_coeff"][0]
+    # ki = e_cfg["PID_fixed_coeff"][1]
+    # kd = e_cfg["PID_fixed_coeff"][2]
 
     P = yaw_err[-1] - yaw_err[-2]
     I = yaw_err[-1]
@@ -127,7 +131,7 @@ def PID_fixed(Tn, yaw_err):
     by the P,I, and D coefficients respectively.
     """
 
-    # rudder PID controller
+    #PID controller
     kp = e_cfg["PID_fixed_coeff"][0]
     ki = e_cfg["PID_fixed_coeff"][1]
     kd = e_cfg["PID_fixed_coeff"][2]

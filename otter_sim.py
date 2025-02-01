@@ -34,6 +34,32 @@ def step_otter(vehicle,data,sampleTime,yaw_err,Vc,beta_c):
     return new_data
 
 
+def step_otter_fossen(vehicle,data,sampleTime,yaw_err,Vc,beta_c):
+    """
+    step_otter(vehicle,data,sampleTime,yaw_err,Vc,beta_c) takes in vehicle, data,
+    sampletime, yaw error, Vc, and beta_c, where data = [eta,nu,u_control,u_actual,tau_X,tau_N]
+    and outputs an updated data list using fossen's heading Autopilot method of otter to 
+    set the control input.
+    """
+
+    tau_N = data[17]
+    tau_X = data[16]
+    eta = data[0:6]
+    nu = data[6:12]
+    u_control = data[12:14]
+    u_actual = data[14:16]
+
+    u_control, tau_N = vehicle.headingAutopilot(eta,nu,cfg["sim_dt"])
+
+    [eta,nu,u_actual,nu_dot] = (
+        vehicle.dynamics(eta,nu,u_actual,u_control,sampleTime,Vc,beta_c)
+    )
+
+    new_data = np.array(list(eta) + list(nu) + list(u_control) + list(u_actual) + [tau_X,tau_N])
+
+    return new_data
+
+
 def sim_otter_course_angle():
 
     num_steps = e_cfg["eval_steps"]

@@ -3,22 +3,22 @@ import math
 import numpy as np
 
 config = {
-    "num_envs": 100,
+    "num_envs": 32,
     "device": "cpu",
     "seed": 0,
     "sim_dt": 0.05,
     "policy_dt": 0.05,
 
     "sim_max_time": 240,
-    "max_steps": 500_000_000,
+    "max_steps": 32_000_000,
     "policy_cls": "MlpPolicy",
     "policy_kwargs": dict(
         activation_fn=torch.nn.ReLU,
         net_arch=[32, 32],
     ),
     "verbose": 1,
-    "rollout_steps": 40,
-    "minibatch_size": 40,
+    "rollout_steps": 128,
+    "minibatch_size": 32,
     "model_save_freq": 500_000, 
 
     # observation space limits
@@ -42,6 +42,7 @@ config = {
     # reward and truncate limits
     "reward_alpha_coefficient": 0.25,
     "reward_beta_coefficient": -0.1,
+    "reward_gamma_coefficient": 0.0,
     "prop_act_penalty_lim": 40,
 
     # reset limits

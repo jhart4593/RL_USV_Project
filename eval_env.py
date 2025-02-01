@@ -12,6 +12,7 @@ from config import config
 from eval_config import eval_config
 from rewards import get_rewards
 from otter import otter
+from fossen_gnc import ssa
 from utils import get_obs, get_obs_norm, PID
 
 
@@ -180,7 +181,7 @@ class USVEnv_eval(gym.Env):
         self.simData = np.array(list(self.eta) + list(self.nu) + list(self.u_control) + list(self.u_actual) + [self.t])
 
         # reset other values
-        self.yaw_err = [0,0,(self.target_course - self.eta[5])]
+        self.yaw_err = [0,0,ssa(self.target_course - self.eta[5])]
         self.tau_N = 0
 
         # determine observation from initial state
@@ -231,7 +232,7 @@ class USVEnv_eval(gym.Env):
         )
 
         # Add to yaw error list, iterate course hold counter if holding
-        self.yaw_err.append(self.target_course - self.eta[5])
+        self.yaw_err.append(ssa(self.target_course - self.eta[5]))
 
         if abs(self.yaw_err[-1]) <= self.cfg["angle_error_lim"]:
             self.course_hold += 1

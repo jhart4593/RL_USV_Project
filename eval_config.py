@@ -33,6 +33,6 @@ eval_config = {
     "LOS_init_path_err": 0.0,
     "sim_max_time": 3000,
     "eval_steps_LOS": 65000,
-    "PID_fixed_coeff": [15.26,0.18,0.32]
+    "PID_fixed_coeff": [80,0.001,3.25]
 
 }

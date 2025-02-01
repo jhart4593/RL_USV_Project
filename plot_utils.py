@@ -7,12 +7,13 @@ def R2D(value):  # radians to degrees
     return value * 180 / math.pi
 
 
-def plotCourseAngle(simData,simTime,target_course):
+def plotCourseAngle(simData,simTime,simData_f,simTime_f,target_course):
     """
-    plotCourseAngle(simData,simTime,target_course) takes in the simData for yaw angle
-    error, simTime, and target course angle and plots the course angle over time.
+    plotCourseAngle(simData,simTime,simData_fixed,simTime_fixed,target_course) takes in the simData 
+    and simTime for the PPO policy as well as the fixed PID controller, and target course angle, 
+    and plots the course angle over time.
     """
-    # Course angle plots over time
+    # Course angle plots over time - PPO policy
     psi = R2D(np.average(ssa(simData),axis=1,keepdims=True))
     psi_std = R2D(np.std(ssa(simData),axis=1,keepdims=True))
     half = len(psi)//2
@@ -25,27 +26,42 @@ def plotCourseAngle(simData,simTime,target_course):
     psi_d1 = np.full(len(psi1),target_course)
     psi_d2 = np.full(len(psi2),target_course)
 
+    # Course angle plots over time - fixed PID policy
+    psi_f = R2D(np.average(ssa(simData_f),axis=1,keepdims=True))
+    psi_std_f = R2D(np.std(ssa(simData_f),axis=1,keepdims=True))
+    half_f = len(psi_f)//2
+    psi1_f = psi_f[0:half_f].T[0]
+    psi2_f = psi_f[half_f:].T[0]
+    psi_std1_f = psi_std_f[0:half_f].T[0]
+    psi_std2_f = psi_std_f[half_f:].T[0]
+    time1_f = simTime_f[0:half_f]
+    time2_f = simTime_f[half_f:]
+
     plt.figure(1)
     plt.subplot(211)
     plt.plot(time1,psi1)
+    plt.plot(time1_f,psi1_f)
     plt.plot(time1,psi_d1,'--k')
     plt.fill_between(time1,psi1-psi_std1,psi1+psi_std1,alpha=0.2)
+    plt.fill_between(time1_f,psi1_f-psi_std1_f,psi1_f+psi_std1_f,alpha=0.2)
     plt.xlabel('Time (s)')
     plt.ylabel('Course Angle (deg)')
     plt.xlim(0,90)
     plt.ylim(-45, 180)
     # plt.title('Course Angle over Episode')
-    plt.legend(['Course angle', 'Target course angle'])
+    plt.legend(['PPO','PID','Target course angle'])
     plt.grid(True)
 
     plt.subplot(212)
     plt.plot(time2,psi2)
+    plt.plot(time2_f,psi2_f)
     plt.plot(time2,psi_d2,'--k')
     plt.fill_between(time2,psi2-psi_std2,psi2+psi_std2,alpha=0.2)
+    plt.fill_between(time2_f,psi2_f-psi_std2_f,psi2_f+psi_std2_f,alpha=0.2)
     plt.xlabel('Time (s)')
     plt.ylabel('Course Angle (deg)')
     plt.xlim(90,180)
-    # plt.ylim(-5, 5)
+    plt.ylim(-5, 5)
     # plt.title('Course Angle over Episode')
     # plt.legend(['Course angle', 'Target course angle'])
     plt.grid(True)
@@ -60,16 +76,16 @@ def plotCourseAngle(simData,simTime,target_course):
         ax.set_xticks(np.arange(1, len(labels) + 1), labels=labels)
         ax.set_xlim(0.25, len(labels) + 0.75)
 
-    labels = ['PPO Policy']
+    labels = ['PPO Policy','PID']
 
     fig,ax = plt.subplots()
     ax.set_xlabel('Label')
     ax.set_ylabel('Course Angle (deg)')
 
-    parts = ax.violinplot(psi2,showextrema=False)
+    parts = ax.violinplot([psi2,psi2_f],showextrema=False)
 
     for pc in parts['bodies']:
-        pc.set_facecolor('g')
+        pc.set_facecolor('forestgreen')
         pc.set_edgecolor('black')
         pc.set_alpha(1)
 
@@ -103,24 +119,26 @@ def plotActionsCourseAngle(kp,ki,kd,simTime):
     plt.ylabel('Action Value')
     plt.title('Course Angle Evaluation Action Values')
 
-    plt.savefig('1_crs_angle_actions.png')
-    # plt.show()
-    plt.close()
+    # plt.savefig('1_crs_angle_actions.png')
+    plt.show()
+    # plt.close()
 
 
-def plotTraj(simData,simTime,path_x,path_y,pref,suf):
+def plotTraj(simData,simTime,simData_f,simTime_f,path_x,path_y,pref,suf):
     """
-    plotTraj(simData,simTime,path_x,path_y) takes in the simData for the trajectory 
-    evaluation, the simTime, and the desired path x and y coordinates and plots the 
-    X-Y position, the course angle error, the trajectory error, and a violin plot of
-    the course angle error.
+    plotTraj(simData,simTime,simData_f,simTime_f,path_x,path_y,pref,suf) takes in the 
+    simData for the trajectory evaluation, the simTime, and the desired path x and y 
+    coordinates and plots the X-Y position, the course angle error, the trajectory error, 
+    and a violin plot of the course angle error for the PPO policy vs. the fixed PID controller.
     """
     
-    # USV position
+    # USV position-----------------------------------------------------------------
     x = simData[:,0]
     y = simData[:,1]
+    x_f = simData_f[:,0]
+    y_f = simData_f[:,1]
 
-    # X, Y position plot
+    # X, Y position plot - PPO
     plt.figure(1)
     plt.plot(x,y)
     plt.plot(path_x,path_y,'--k')
@@ -132,59 +150,111 @@ def plotTraj(simData,simTime,path_x,path_y,pref,suf):
     # plt.xlim(-600,600)
     # plt.ylim(-600,600)
 
-    # plt.savefig(pref + '_trajectory_' + suf + '.png')
+    # plt.savefig(pref + '_traj_PPO_' + suf + '.png')
     plt.show()
     # plt.close()
 
-    # Course angle error
-    yaw_err = simData[:,17] * 180/math.pi
-
+    # X, Y position plot - PID
     plt.figure(2)
+    plt.plot(x_f,y_f,'g')
+    plt.plot(path_x,path_y,'--k')
+    plt.xlabel('X / East (m)')
+    plt.ylabel('Y / North (m)')
+    # plt.title('X-Y Trajectory')
+    plt.grid(True)
+    plt.legend(['PID','Target Path'])
+    # plt.xlim(-600,600)
+    # plt.ylim(-600,600)
+
+    # plt.savefig(pref + '_traj_PID_' + suf + '.png')
+    plt.show()
+    # plt.close()
+
+    # Course angle error--------------------------------------------------------
+    yaw_err = simData[:,17] * 180/math.pi
+    yaw_err_f = simData_f[:,17] * 180/math.pi
+
+    # PPO
+    plt.figure(3)
     plt.plot(simTime,yaw_err)
     plt.xlabel('Time (s)')
     plt.ylabel('Course Angle Error (deg)')
     # plt.title('Course Angle Error')
     plt.grid(True)
-    # plt.legend(['PPO-PID','Target Path'])
+    plt.legend(['PPO-PID'])
     # plt.xlim(-600,600)
     # plt.ylim(-600,600)
 
-    # plt.savefig(pref + '_course_angle_err_' + suf + '.png')
+    # plt.savefig(pref + '_PPO_course_angle_err_' + suf + '.png')
     plt.show()
     # plt.close()
 
-    # Path error
-    path_err = simData[:,18]
+    # PID
+    plt.figure(4)
+    plt.plot(simTime_f,yaw_err_f,'g')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Course Angle Error (deg)')
+    # plt.title('Course Angle Error')
+    plt.grid(True)
+    plt.legend(['PID'])
+    # plt.xlim(-600,600)
+    # plt.ylim(-600,600)
 
-    plt.figure(3)
+    # plt.savefig(pref + '_PID_course_angle_err_' + suf + '.png')
+    plt.show()
+    # plt.close()
+
+    # Path error----------------------------------------------------------
+    path_err = simData[:,18]
+    path_err_f = simData_f[:,18]
+
+    # PPO
+    plt.figure(5)
     plt.plot(simTime,path_err)
     plt.xlabel('Time (s)')
     plt.ylabel('Trajectory Error (m)')
     # plt.title('Trajectory Error')
     plt.grid(True)
-    # plt.legend(['PPO-PID','Target Path'])
+    plt.legend(['PPO-PID'])
     # plt.xlim(-600,600)
     # plt.ylim(-600,600)
 
-    # plt.savefig(pref + '_path_err_' + suf + '.png')
+    # plt.savefig(pref + '_PPO_path_err_' + suf + '.png')
     plt.show()
     # plt.close()
 
-    # violin plot of course angle error
+    # PID
+    plt.figure(6)
+    plt.plot(simTime_f,path_err_f,'g')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Trajectory Error (m)')
+    # plt.title('Trajectory Error')
+    plt.grid(True)
+    plt.legend(['PID'])
+    # plt.xlim(-600,600)
+    # plt.ylim(-600,600)
+
+    # plt.savefig(pref + '_PID_path_err_' + suf + '.png')
+    plt.show()
+    # plt.close()
+
+
+    # violin plot of course angle error--------------------------------------
     def set_axis_style(ax, labels):
         ax.set_xticks(np.arange(1, len(labels) + 1), labels=labels)
         ax.set_xlim(0.25, len(labels) + 0.75)
 
-    labels = ['PPO Policy']
+    labels = ['PPO Policy','PID']
 
     fig4,ax4 = plt.subplots()
     ax4.set_xlabel('Label')
     ax4.set_ylabel('Course Angle Error (deg)')
+    ax4.set_ylim([-15,15])
 
-    parts = ax4.violinplot(yaw_err,showextrema=False)
+    parts = ax4.violinplot([yaw_err,yaw_err_f],showextrema=False)
 
     for pc in parts['bodies']:
-        pc.set_facecolor('b')
+        pc.set_facecolor('royalblue')
         pc.set_edgecolor('black')
         pc.set_alpha(1)
 

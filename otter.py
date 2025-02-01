@@ -340,6 +340,8 @@ class otter:
 
         tau_N = (T/K) * a_d + (1/K) * rd
                - Kp * ( ssa( psi-psi_d ) + Td * (r - r_d) + (1/Ti) * z )
+        
+        added tau_N as an output
 
         """
         psi = eta[5]  # yaw angle
@@ -384,7 +386,7 @@ class otter:
         [n1, n2] = self.controlAllocation(tau_X, tau_N)
         u_control = np.array([n1, n2], float)
 
-        return u_control
+        return u_control, tau_N
 
 
     def stepInput(self, t):

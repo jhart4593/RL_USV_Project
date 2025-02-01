@@ -14,15 +14,18 @@ def get_rewards(yaw_err, simData):
     e_yaw = yaw_err[-1]; 
     yaw_err_list = yaw_err[2:]
     e_yaw_min = np.min(np.absolute(yaw_err_list))
+    time = simData[-1][16]
     
     alpha = cfg["reward_alpha_coefficient"]
     beta = cfg["reward_beta_coefficient"]
+    gamma = cfg["reward_gamma_coefficient"]
 
     # define functions for T operator of reward function - reward small course angle error, 
     # penalize if course angle error grows
     def T_op(err, err_min):
-        if abs(err) <= (abs(err_min) + 0.001):
+        if abs(err) <= (abs(err_min) + 0.0001):
             T = math.exp(-abs(err))
+            # T = T * (cfg["sim_max_time"] - time)/cfg["sim_max_time"]
         else:
             T = -abs(err) / math.pi
         return T
@@ -53,12 +56,14 @@ def get_rewards(yaw_err, simData):
     #     neg_prop_act += beta * math.exp(-abs(exp_val))
 
     # Calculate individual reward terms
-    T_yaw = alpha * T_op(e_yaw, e_yaw_min)
+    T_yaw = alpha * T_op(e_yaw, e_yaw_min) / (simData.shape[0] + 1)
+
+    time_pen = gamma * time / cfg["sim_max_time"]
 
     # Output individual reward terms as well as sum
-    indiv_terms = [T_yaw,neg_prop_act]
+    indiv_terms = [T_yaw,neg_prop_act,time_pen]
 
-    r_t = (T_yaw + neg_prop_act)
+    r_t = (T_yaw + neg_prop_act + time_pen)
 
     return r_t, indiv_terms
 
