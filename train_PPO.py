@@ -1,3 +1,5 @@
+import os
+import shutil
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.callbacks import CheckpointCallback
@@ -15,19 +17,21 @@ run = wandb.init(
     sync_tensorboard=True,
     # monitor_gym=True,
     save_code=True,
+    dir = "../../../media/jhart/jhart_drive/",
 )
 
 # Save checkpoint every model_save_freq steps
 save_freq = config["model_save_freq"]
 checkpoint_callback = CheckpointCallback(
     save_freq = max(save_freq // config["num_envs"], 1),
-    save_path="./model_logs/",
+    save_path = "../../../media/jhart/jhart_drive/model_logs/",
+    # save_path = "./model_logs/"
     name_prefix="rl_model"
 )
 
 # Save config, env, and rewards file for each training run to wandb
 wandb.save( "./config.py")
-wandb.save("rewards.py")
+wandb.save("./rewards.py")
 wandb.save("./env.py")
 
 env = make_vec_env(USVEnv,n_envs=config["num_envs"])
@@ -56,9 +60,11 @@ try:
             checkpoint_callback
         ],
     )
-    save_dir = "./final_model"
+    save_dir = "./final_model/"
     model.save(save_dir + "PPO_USV")
 
 except:
     traceback.print_exc()
+
 run.finish()
+

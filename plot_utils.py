@@ -46,7 +46,7 @@ def plotCourseAngle(simData,simTime,simData_f,simTime_f,target_course):
     plt.fill_between(time1_f,psi1_f-psi_std1_f,psi1_f+psi_std1_f,alpha=0.2)
     plt.xlabel('Time (s)')
     plt.ylabel('Course Angle (deg)')
-    plt.xlim(0,90)
+    plt.xlim(0,80)
     plt.ylim(-45, 180)
     # plt.title('Course Angle over Episode')
     plt.legend(['PPO','PID','Target course angle'])
@@ -60,16 +60,16 @@ def plotCourseAngle(simData,simTime,simData_f,simTime_f,target_course):
     plt.fill_between(time2_f,psi2_f-psi_std2_f,psi2_f+psi_std2_f,alpha=0.2)
     plt.xlabel('Time (s)')
     plt.ylabel('Course Angle (deg)')
-    plt.xlim(90,180)
+    plt.xlim(80,160)
     plt.ylim(-5, 5)
     # plt.title('Course Angle over Episode')
     # plt.legend(['Course angle', 'Target course angle'])
     plt.grid(True)
 
     plt.tight_layout()
-    # plt.savefig('1_course_angle.png')
-    plt.show()
-    # plt.close()
+    plt.savefig('1_course_angle.png')
+    # plt.show()
+    plt.close()
 
     # violin plot of course angle after 1/2 way pt
     def set_axis_style(ax, labels):
@@ -91,9 +91,9 @@ def plotCourseAngle(simData,simTime,simData_f,simTime_f,target_course):
 
     set_axis_style(ax,labels)
 
-    # plt.savefig('1_course_angle_violin.png')
-    plt.show()
-    # plt.close()
+    plt.savefig('1_course_angle_violin.png')
+    # plt.show()
+    plt.close()
 
 
 def plotActionsCourseAngle(kp,ki,kd,simTime):
@@ -119,9 +119,9 @@ def plotActionsCourseAngle(kp,ki,kd,simTime):
     plt.ylabel('Action Value')
     plt.title('Course Angle Evaluation Action Values')
 
-    # plt.savefig('1_crs_angle_actions.png')
-    plt.show()
-    # plt.close()
+    plt.savefig('1_crs_angle_actions.png')
+    # plt.show()
+    plt.close()
 
 
 def plotTraj(simData,simTime,simData_f,simTime_f,path_x,path_y,pref,suf):
@@ -150,9 +150,9 @@ def plotTraj(simData,simTime,simData_f,simTime_f,path_x,path_y,pref,suf):
     # plt.xlim(-600,600)
     # plt.ylim(-600,600)
 
-    # plt.savefig(pref + '_traj_PPO_' + suf + '.png')
-    plt.show()
-    # plt.close()
+    plt.savefig(pref + '_traj_PPO_' + suf + '.png')
+    # plt.show()
+    plt.close()
 
     # X, Y position plot - PID
     plt.figure(2)
@@ -166,9 +166,9 @@ def plotTraj(simData,simTime,simData_f,simTime_f,path_x,path_y,pref,suf):
     # plt.xlim(-600,600)
     # plt.ylim(-600,600)
 
-    # plt.savefig(pref + '_traj_PID_' + suf + '.png')
-    plt.show()
-    # plt.close()
+    plt.savefig(pref + '_traj_PID_' + suf + '.png')
+    # plt.show()
+    plt.close()
 
     # Course angle error--------------------------------------------------------
     yaw_err = simData[:,17] * 180/math.pi
@@ -185,9 +185,9 @@ def plotTraj(simData,simTime,simData_f,simTime_f,path_x,path_y,pref,suf):
     # plt.xlim(-600,600)
     # plt.ylim(-600,600)
 
-    # plt.savefig(pref + '_PPO_course_angle_err_' + suf + '.png')
-    plt.show()
-    # plt.close()
+    plt.savefig(pref + '_PPO_course_angle_err_' + suf + '.png')
+    # plt.show()
+    plt.close()
 
     # PID
     plt.figure(4)
@@ -200,9 +200,9 @@ def plotTraj(simData,simTime,simData_f,simTime_f,path_x,path_y,pref,suf):
     # plt.xlim(-600,600)
     # plt.ylim(-600,600)
 
-    # plt.savefig(pref + '_PID_course_angle_err_' + suf + '.png')
-    plt.show()
-    # plt.close()
+    plt.savefig(pref + '_PID_course_angle_err_' + suf + '.png')
+    # plt.show()
+    plt.close()
 
     # Path error----------------------------------------------------------
     path_err = simData[:,18]
@@ -219,9 +219,9 @@ def plotTraj(simData,simTime,simData_f,simTime_f,path_x,path_y,pref,suf):
     # plt.xlim(-600,600)
     # plt.ylim(-600,600)
 
-    # plt.savefig(pref + '_PPO_path_err_' + suf + '.png')
-    plt.show()
-    # plt.close()
+    plt.savefig(pref + '_PPO_path_err_' + suf + '.png')
+    # plt.show()
+    plt.close()
 
     # PID
     plt.figure(6)
@@ -234,9 +234,9 @@ def plotTraj(simData,simTime,simData_f,simTime_f,path_x,path_y,pref,suf):
     # plt.xlim(-600,600)
     # plt.ylim(-600,600)
 
-    # plt.savefig(pref + '_PID_path_err_' + suf + '.png')
-    plt.show()
-    # plt.close()
+    plt.savefig(pref + '_PID_path_err_' + suf + '.png')
+    # plt.show()
+    plt.close()
 
 
     # violin plot of course angle error--------------------------------------
@@ -260,9 +260,9 @@ def plotTraj(simData,simTime,simData_f,simTime_f,path_x,path_y,pref,suf):
 
     set_axis_style(ax4,labels)
 
-    # plt.savefig(pref + '_course_angle_err_violin_' + suf + '.png')
-    plt.show()
-    # plt.close()
+    plt.savefig(pref + '_course_angle_err_violin_' + suf + '.png')
+    # plt.show()
+    plt.close()
 
 
 def plotStates(simData,simTime,pref,suf):

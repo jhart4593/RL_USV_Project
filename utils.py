@@ -69,7 +69,7 @@ def get_obs_norm(yaw_err, nu, nu_dot, u_actual, delTn, cont_coeffs):
     vel = [nu[0]/vel_lim,nu[1]/vel_lim,nu[5]/ang_vel_lim]
     acc = [nu_dot[0]/acc_lim,nu_dot[1]/acc_lim,nu_dot[5]/ang_acc_lim]
 
-    u_norm = (u_actual - prop_rpm_min)/(prop_rpm_max - prop_rpm_min)*2 - 1
+    u_norm = ((u_actual - prop_rpm_min)/(prop_rpm_max - prop_rpm_min))*2 - 1
 
     P_norm = cont_coeffs[0]/P_lim
     I_norm = cont_coeffs[1]/I_lim

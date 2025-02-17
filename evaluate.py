@@ -12,7 +12,7 @@ from eval_config import eval_config
 from plot_utils import plotCourseAngle, plotTraj, plotControls, plotStates, plotActionsTraj, plotActionsCourseAngle
 from otter_sim import sim_otter_course_angle, sim_otter_LOS
 
-policy = "./model_logs/rl_model_6500000_steps.zip"
+policy = "./model_logs/rl_model_52000000_steps.zip"
 
 # Initial course angle evaluation -----------------------------------------------------------------------------------
 env = make_vec_env(USVEnv_eval)
@@ -77,47 +77,48 @@ plotActionsCourseAngle(kp_total,ki_total,kd_total,simTime)
 
 
 
-# # LOS Evaluation - circle trajectory ----------------------------------------------------------------------------
-# env = make_vec_env(USVEnv_eval_LOS)
-# model = PPO.load(policy, env=env)
-# num_steps = eval_config["eval_steps_LOS"]
+# LOS Evaluation - circle trajectory ----------------------------------------------------------------------------
+env = make_vec_env(USVEnv_eval_LOS)
+model = PPO.load(policy, env=env)
+num_steps = eval_config["eval_steps_LOS"]
 
-# obs = env.reset()
-# info = env.reset_infos
-# act = np.empty([0,3],float)
+obs = env.reset()
+info = env.reset_infos
+act = np.empty([0,3],float)
 
-# for ii in range(num_steps):
-#     t = ii * config["sim_dt"]
-#     action, _ = model.predict(obs,deterministic=True)
-#     obs, rew, done, info = env.step(action)
+for ii in range(num_steps):
+    t = ii * config["sim_dt"]
+    action, _ = model.predict(obs,deterministic=True)
+    obs, rew, done, info = env.step(action)
 
-#     # if t%10 == 0:
-#     #     print(action)
+    # if t%10 == 0:
+    #     print(action)
 
-#     # save action values
-#     act = np.vstack((act,np.array(action)))
+    # save action values
+    act = np.vstack((act,np.array(action)))
 
-#     if done:
-#         break
+    if done:
+        break
 
-# # print(info[0]["Data"])
-# simData = info[0]["Data"]
+# print(info[0]["Data"])
+simData = info[0]["Data"]
 
-# simTime = []
-# for jj in range(simData.shape[0]):
-#     t = jj * config["sim_dt"]
-#     simTime.append(t)
+simTime = []
+for jj in range(simData.shape[0]):
+    t = jj * config["sim_dt"]
+    simTime.append(t)
 
-# # fixed PID trajectory data
-# simTime_f, simData_f = sim_otter_LOS(eval_config["path_x"],eval_config["path_y"])
+# fixed PID trajectory data
+simTime_f, simData_f = sim_otter_LOS(eval_config["path_x"],eval_config["path_y"])
 
-# # Plots
-# plotTraj(simData,simTime,simData_f,simTime_f,eval_config["path_x"],eval_config["path_y"],'2','')
-# plotStates(simData,simTime,'2','')
-# plotStates(simData_f,simTime_f,'2','PID')
-# plotControls(simData,simTime,'2','')
-# plotControls(simData_f,simTime_f,'2','PID')
-# plotActionsTraj(act,simTime,'2','')
+
+# Plots
+plotTraj(simData,simTime,simData_f,simTime_f,eval_config["path_x"],eval_config["path_y"],'2','')
+plotStates(simData,simTime,'2','')
+plotStates(simData_f,simTime_f,'2','PID')
+plotControls(simData,simTime,'2','')
+plotControls(simData_f,simTime_f,'2','PID')
+plotActionsTraj(act,simTime,'2','')
 
 
 

@@ -23,8 +23,9 @@ def get_rewards(yaw_err, simData):
     # define functions for T operator of reward function - reward small course angle error, 
     # penalize if course angle error grows
     def T_op(err, err_min):
-        if abs(err) <= (abs(err_min) + 0.0001):
+        if abs(err) <= (abs(err_min) + 0.001):
             T = math.exp(-abs(err))
+            # T = T / (simData.shape[0] + 1)
             # T = T * (cfg["sim_max_time"] - time)/cfg["sim_max_time"]
         else:
             T = -abs(err) / math.pi
@@ -33,7 +34,7 @@ def get_rewards(yaw_err, simData):
     # Initialize prop command penalty
     neg_prop_act = 0
     
-    # # Penalizing if greatest difference in last 5 prop commands is over threshold in config
+    # Penalizing if greatest difference in last 5 prop commands is over threshold in config
     # prop_cmd_lst1 = simData[:,12]
     # prop_cmd_lst2 = simData[:,13]
     # pen_lim = cfg["prop_act_penalty_lim"]
@@ -56,7 +57,7 @@ def get_rewards(yaw_err, simData):
     #     neg_prop_act += beta * math.exp(-abs(exp_val))
 
     # Calculate individual reward terms
-    T_yaw = alpha * T_op(e_yaw, e_yaw_min) / (simData.shape[0] + 1)
+    T_yaw = alpha * T_op(e_yaw, e_yaw_min) 
 
     time_pen = gamma * time / cfg["sim_max_time"]
 

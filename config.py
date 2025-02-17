@@ -9,8 +9,8 @@ config = {
     "sim_dt": 0.05,
     "policy_dt": 0.05,
 
-    "sim_max_time": 240,
-    "max_steps": 32_000_000,
+    "sim_max_time": 160,
+    "max_steps": 5_000_000_000,
     "policy_cls": "MlpPolicy",
     "policy_kwargs": dict(
         activation_fn=torch.nn.ReLU,
@@ -19,34 +19,34 @@ config = {
     "verbose": 1,
     "rollout_steps": 128,
     "minibatch_size": 32,
-    "model_save_freq": 500_000, 
+    "model_save_freq": 1_000_000, 
 
     # observation space limits
-    "vel_lim": 10,
+    "vel_lim": 3.1,
     "acc_lim": 2.5,
     "ang_vel_lim": 10*math.pi,
-    "ang_acc_lim": math.pi,
+    "ang_acc_lim": 0.20,
     "yaw_err_lim": math.pi,
     "prop_rpm_max": 103.93,
     "prop_rpm_min": -101.74,
-    "delTn_lim": 377,
+    "delTn_lim": 350,
     "P_limit": 2*math.radians(180),
     "I_limit": math.radians(180),
     "D_limit": 4*math.radians(180),
 
     # PID coefficient limits
-    "Kp_limit": 80,
+    "Kp_limit": 100,
     "Ki_limit": 4,
     "Kd_limit": 4,
 
     # reward and truncate limits
-    "reward_alpha_coefficient": 0.25,
+    "reward_alpha_coefficient": 0.078125,
     "reward_beta_coefficient": -0.1,
     "reward_gamma_coefficient": 0.0,
     "prop_act_penalty_lim": 40,
 
     # reset limits
-    "tau_X": 120.0,
+    "tau_X": 90.0,
     "water_curr_vel_low": 0.0,
     "water_curr_vel_high": 1.0,
     "water_curr_angle_low": math.radians(-180),
@@ -54,6 +54,6 @@ config = {
 
     # Desired course angle
     "target_course_angle": math.radians(0),
-    "angle_error_lim": 0.05,
+    "angle_error_lim": 0.09,
     "target_hold_time": 2
 }

@@ -143,13 +143,13 @@ class USVEnv(gym.Env):
         super().reset(seed=seed)
 
         # Render the data for episode about to be reset and reset counter
-        if self.counter > 1: 
+        if (self.counter % 10 == 0) and (self.t > 0): 
             plot_1, plot_2 = self.render()
             wandb.log({"plot/X_Y": wandb.Image(plot_1)})
             wandb.log({"plot/Course_angle": wandb.Image(plot_2)})
             plt.close('all')
             
-        self.counter = 0
+        self.counter += 1
 
         # Reset time counter and course hold counter
         self.t = 0
@@ -249,7 +249,7 @@ class USVEnv(gym.Env):
 
         # Iterate time counter and plotting counter
         self.t += self.sampleTime
-        self.counter += 1
+        # self.counter += 1
 
         # Store simulation data
         self.simData = np.vstack((self.simData,np.array(list(self.eta) + list(self.nu) + list(self.u_control) + list(self.u_actual) + [self.t])))
@@ -270,8 +270,11 @@ class USVEnv(gym.Env):
         
         # set terminated criteria - if reached desired course angle or hold course angle for desired amount of time
         terminated = False
-        if abs(self.yaw_err[-1]) <= self.cfg["angle_error_lim"]:
-            terminated = True
+        # if abs(self.yaw_err[-1]) <= self.cfg["angle_error_lim"]:
+        #     terminated = True
+
+        if (self.t >= self.max_time):
+           terminated = True
 
         # if self.course_hold >= (self.cfg["target_hold_time"]/self.cfg["sim_dt"]):
         #     terminated = True
@@ -279,7 +282,7 @@ class USVEnv(gym.Env):
         # set truncated criteria
         # if over max time, if roll/pitch over prescribed limits
         truncated = False
-        if (self.t > self.max_time):
+        if (self.t > (self.max_time + 10)):
            truncated = True
 
         # set value based on terminated or truncated for episode 

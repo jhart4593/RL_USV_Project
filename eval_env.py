@@ -264,7 +264,7 @@ class USVEnv_eval(gym.Env):
         # set truncated criteria
         # if over max time, if roll/pitch over prescribed limits
         truncated = False
-        if (self.t > self.max_time):
+        if (self.t > (self.max_time + 10)):
            truncated = True
 
         # set value based on terminated or truncated for episode 
