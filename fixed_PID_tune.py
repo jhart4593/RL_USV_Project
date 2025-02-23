@@ -99,11 +99,11 @@ def tune_PID():
 
     simData_total = np.empty([num_steps+1,0],float)
 
-    for ii in np.linspace(0,4,5):
+    for ii in np.linspace(50,150,8):
 
-        for jj in np.linspace(0,1,5):
+        for jj in np.linspace(0,1,8):
 
-            for kk in np.linspace(0,80,5):
+            for kk in np.linspace(300,500,8):
 
                 curr_vel,vehicle,eta,nu,u_actual,u_control,yaw_err,tau_N = reset()
                 data = np.array(list(eta) + list(nu) + list(u_control) + list(u_actual) + [tau_X,tau_N])

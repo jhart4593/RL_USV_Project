@@ -95,6 +95,54 @@ def plotCourseAngle(simData,simTime,simData_f,simTime_f,target_course):
     # plt.show()
     plt.close()
 
+def plotCourseAngle_PID(simData_f,simTime_f,target_course):
+    """
+    plotCourseAngle(simData,simTime,simData_fixed,simTime_fixed,target_course) takes in the simData 
+    and simTime for the PPO policy as well as the fixed PID controller, and target course angle, 
+    and plots the course angle over time.
+    """
+
+    # Course angle plots over time - fixed PID policy
+    psi_f = R2D(np.average(ssa(simData_f),axis=1,keepdims=True))
+    psi_std_f = R2D(np.std(ssa(simData_f),axis=1,keepdims=True))
+    half_f = len(psi_f)//2
+    psi1_f = psi_f[0:half_f].T[0]
+    psi2_f = psi_f[half_f:].T[0]
+    psi_std1_f = psi_std_f[0:half_f].T[0]
+    psi_std2_f = psi_std_f[half_f:].T[0]
+    time1_f = simTime_f[0:half_f]
+    time2_f = simTime_f[half_f:]
+    psi_d1 = np.full(len(psi1_f),target_course)
+    psi_d2 = np.full(len(psi2_f),target_course)
+
+    plt.figure(1)
+    plt.subplot(211)
+    plt.plot(time1_f,psi1_f)
+    plt.plot(time1_f,psi_d1,'--k')
+    plt.fill_between(time1_f,psi1_f-psi_std1_f,psi1_f+psi_std1_f,alpha=0.2)
+    plt.xlabel('Time (s)')
+    plt.ylabel('Course Angle (deg)')
+    plt.xlim(0,80)
+    plt.ylim(-45, 180)
+    # plt.title('Course Angle over Episode')
+    plt.legend(['PPO','PID','Target course angle'])
+    plt.grid(True)
+
+    plt.subplot(212)
+    plt.plot(time2_f,psi2_f)
+    plt.plot(time2_f,psi_d2,'--k')
+    plt.fill_between(time2_f,psi2_f-psi_std2_f,psi2_f+psi_std2_f,alpha=0.2)
+    plt.xlabel('Time (s)')
+    plt.ylabel('Course Angle (deg)')
+    plt.xlim(80,160)
+    plt.ylim(-5, 5)
+    # plt.title('Course Angle over Episode')
+    # plt.legend(['Course angle', 'Target course angle'])
+    plt.grid(True)
+
+    plt.tight_layout()
+    plt.show()
+
 
 def plotActionsCourseAngle(kp,ki,kd,simTime):
     """

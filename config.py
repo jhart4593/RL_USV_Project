@@ -35,9 +35,9 @@ config = {
     "D_limit": 4*math.radians(180),
 
     # PID coefficient limits
-    "Kp_limit": 100,
-    "Ki_limit": 4,
-    "Kd_limit": 4,
+    "Kp_limit": 4000,
+    "Ki_limit": 300,
+    "Kd_limit": 300,
 
     # reward and truncate limits
     "reward_alpha_coefficient": 0.078125,
@@ -46,7 +46,7 @@ config = {
     "prop_act_penalty_lim": 40,
 
     # reset limits
-    "tau_X": 90.0,
+    "tau_X": 120.0,
     "water_curr_vel_low": 0.0,
     "water_curr_vel_high": 1.0,
     "water_curr_angle_low": math.radians(-180),
@@ -55,5 +55,9 @@ config = {
     # Desired course angle
     "target_course_angle": math.radians(0),
     "angle_error_lim": 0.09,
-    "target_hold_time": 2
+    "target_hold_time": 2,
+
+    # Varying current
+    "mu": 0.15,
+    "Vmin": 0.10,
 }

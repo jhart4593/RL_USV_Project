@@ -1,5 +1,6 @@
 import math
 import numpy as np
+from scipy.integrate import odeint
 from config import config as cfg
 from eval_config import eval_config as e_cfg
 from fossen_gnc import ssa
@@ -146,6 +147,60 @@ def PID_fixed(Tn, yaw_err):
 
     return Tn
 
+def get_current(Vc0,mu,Vmax,Vmin,beta_c0):
+    """
+    curr_vel = get_current(Vc0,mu,Vmax,Vmin,beta_c0) takes in a starting disturbance magnitude,
+    a constant ([0,1]), and max/min disturbance magnitudes, and starting current angle, 
+    and outputs a gauss-markov white noise current magnitude and current angle sinusoid
+    for the number of steps in the simulation.
+    """
+    # seed random variables
+    np.random.seed(99)
+
+    # ode solver for gauss-markov white noise process current
+    def current(y,t,mu,w):
+        Vc = y
+        idx = int(t/cfg["sim_dt"])
+        dydt = w[idx] - mu*Vc
+        return dydt
+
+    # define white noise
+    mean = 0
+    std = 1
+    num_samples = e_cfg["eval_steps"]+1
+    w = np.random.normal(mean, std, size=num_samples)
+
+    # solve for current model
+    y0 = Vc0
+    t = np.linspace(0,e_cfg["eval_time"],num_samples)
+    curr_vel = odeint(current,y0,t,args=(mu,w))
+
+    for idx,val in enumerate(curr_vel):
+        if val > Vmax:
+            curr_vel[idx] = Vmax
+        if val < Vmin:
+            curr_vel[idx] = Vmin
+
+    phase = math.asin(beta_c0/math.pi)
+    omega = 1/e_cfg["eval_time"]
+    curr_angle = math.pi * np.sin(2*math.pi*omega*t + phase)
+    
+    return curr_vel, curr_angle
+
+
+def get_curr_angle(beta_c0):
+    """
+    current_angle = get_curr_angle(beta_c0) takes in the starting current angle, 
+    and outputs a current angle sinusoid for the number of steps in the simulation.
+    """
+    num_samples = e_cfg["eval_steps"]+1
+    t = np.linspace(0,e_cfg["eval_time"],num_samples)
+
+    phase = math.asin(beta_c0/math.pi)
+    omega = 1/e_cfg["eval_time"]
+    curr_angle = math.pi * np.sin(2*math.pi*omega*t + phase)
+
+    return curr_angle
 
 
 # test the functions

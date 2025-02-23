@@ -3,7 +3,7 @@ import numpy as np
 from config import config as cfg
 from eval_config import eval_config as e_cfg
 from fossen_gnc import ssa
-from utils import PID_fixed, LOS_guidance
+from utils import PID_fixed, LOS_guidance, get_current
 from otter import otter
 
 
@@ -101,6 +101,7 @@ def sim_otter_course_angle():
         curr_vel,vehicle,eta,nu,u_actual,u_control,yaw_err,tau_N = reset()
         data = np.array(list(eta) + list(nu) + list(u_control) + list(u_actual) + [tau_X,tau_N])
         beta_c = disturbance_angle[kk]
+        [current_mag,current_angle] = get_current(curr_vel,cfg["mu"],cfg["water_curr_vel_high"],cfg["Vmin"],beta_c)
         simData = np.array(eta[5])
 
         for ii in range(num_steps):
@@ -108,9 +109,9 @@ def sim_otter_course_angle():
             if t < 1:
                 Vc = 0
             else:
-                Vc = curr_vel
+                Vc = current_mag[ii][0]
 
-            data = step_otter(vehicle,data,sampleTime,yaw_err,Vc,beta_c)
+            data = step_otter(vehicle,data,sampleTime,yaw_err,Vc,current_angle[ii])
             eta = data[0:6]
             yaw_err.append(target_course - eta[5])
 

@@ -13,7 +13,7 @@ from eval_config import eval_config
 from rewards import get_rewards
 from otter import otter
 from fossen_gnc import ssa
-from utils import get_obs, get_obs_norm, PID
+from utils import get_obs, get_obs_norm, PID, get_current, get_curr_angle
 
 
 class USVEnv_eval(gym.Env):
@@ -34,7 +34,8 @@ class USVEnv_eval(gym.Env):
         get_obs_norm: Callable = get_obs_norm,
         PID: Callable = PID,
         otter: Callable = otter,
-        
+        get_current: Callable = get_current,
+        get_curr_angle: Callable = get_curr_angle,
         ):
 
         super(USVEnv_eval, self).__init__()
@@ -47,6 +48,8 @@ class USVEnv_eval(gym.Env):
         self.get_obs_norm = get_obs_norm
         self.PID = PID
         self.otter = otter
+        self.get_current = get_current
+        self.get_curr_angle = get_curr_angle
 
         # initialize anything necessary for environment
         self.num_term = 0
@@ -165,6 +168,7 @@ class USVEnv_eval(gym.Env):
         # set water current velocity and angle from eval_config file
         self.Vc = self.e_cfg["water_curr_vel"]
         self.beta_c = self.e_cfg["water_curr_angle"][0]
+        [self.current_mag,self.current_angle] = self.get_current(self.Vc,self.cfg["mu"],self.cfg["water_curr_vel_high"],self.cfg["Vmin"],self.beta_c)
 
         # Reset vehicle instance
         self.vehicle = self.otter(tau_X=self.tau_X)
@@ -204,7 +208,10 @@ class USVEnv_eval(gym.Env):
         if self.t < 1:
             Vc = 0
         else:
-            Vc = self.Vc
+            Vc = self.current_mag[self.counter+1][0]
+
+        curr_angle = self.get_curr_angle(self.beta_c)
+        beta_c = curr_angle[self.counter+1]
 
         # handling normalized action space
         def kp_norm(norm_action):
@@ -228,7 +235,7 @@ class USVEnv_eval(gym.Env):
         self.u_control = self.vehicle.controlAllocation(self.tau_X,self.tau_N)
 
         [self.eta,self.nu,self.u_actual,self.nu_dot] = (
-            self.vehicle.dynamics(self.eta,self.nu,self.u_actual,self.u_control,self.sampleTime,Vc,self.beta_c)
+            self.vehicle.dynamics(self.eta,self.nu,self.u_actual,self.u_control,self.sampleTime,Vc,beta_c)
         )
 
         # Add to yaw error list, iterate course hold counter if holding

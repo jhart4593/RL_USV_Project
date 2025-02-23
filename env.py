@@ -11,7 +11,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from config import config
 from rewards import get_rewards
 from otter import otter
-from utils import get_obs, get_obs_norm, PID
+from utils import get_obs, get_obs_norm, PID, get_current
 from fossen_gnc import ssa
 
 
@@ -32,7 +32,7 @@ class USVEnv(gym.Env):
         get_obs_norm: Callable = get_obs_norm,
         PID: Callable = PID,
         otter: Callable = otter,
-        
+        get_current: Callable = get_current,
         ):
 
         super(USVEnv, self).__init__()
@@ -44,6 +44,7 @@ class USVEnv(gym.Env):
         self.get_obs_norm = get_obs_norm
         self.PID = PID
         self.otter = otter
+        self.get_current = get_current
 
         # initialize anything necessary for environment
         self.num_term = 0
@@ -172,6 +173,7 @@ class USVEnv(gym.Env):
         # randomly sample water current velocity and angle over range in config file
         self.Vc = self.np_random.uniform(low=self.cfg["water_curr_vel_low"], high=self.cfg["water_curr_vel_high"])
         self.beta_c = self.np_random.uniform(low=self.cfg["water_curr_angle_low"], high=self.cfg["water_curr_angle_high"])
+        [self.current_mag,self.current_angle] = self.get_current(self.Vc,self.cfg["mu"],self.cfg["water_curr_vel_high"],self.cfg["Vmin"],self.beta_c)
 
         # Reset vehicle instance
         self.vehicle = self.otter(tau_X=self.tau_X)
@@ -209,7 +211,9 @@ class USVEnv(gym.Env):
         if self.t < 1:
             Vc = 0
         else:
-            Vc = self.Vc
+            Vc = self.current_mag[self.counter+1][0]
+
+        beta_c = self.current_angle[self.counter+1]
 
         # handling normalized action space
         def kp_norm(norm_action):
@@ -233,7 +237,7 @@ class USVEnv(gym.Env):
         self.u_control = self.vehicle.controlAllocation(self.tau_X,self.tau_N)
 
         [self.eta,self.nu,self.u_actual,self.nu_dot] = (
-            self.vehicle.dynamics(self.eta,self.nu,self.u_actual,self.u_control,self.sampleTime,Vc,self.beta_c)
+            self.vehicle.dynamics(self.eta,self.nu,self.u_actual,self.u_control,self.sampleTime,Vc,beta_c)
         )
 
         # Add to yaw error list, iterate course hold counter if holding
