@@ -1,1 +1,1 @@
-Master's degree project completed in the Spring 2025 semester at UT Austin.
+Adaptive course keeping controller for an unmanned surface vehicle (USV) using reinforcement learning (RL).
