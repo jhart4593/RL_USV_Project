@@ -8,14 +8,15 @@ from gymnasium import spaces
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-from config import config
+from training.config import config
 from eval_config import eval_config
-from rewards import get_rewards
-from otter import otter
-from utils import get_obs, get_obs_norm, PID, LOS_guidance
+from utilities.rewards import get_rewards
+from utilities.otter import otter
+from utilities.fossen_gnc import ssa
+from utilities.utils import get_obs, get_obs_norm, PID, get_current, get_curr_angle
 
 
-class USVEnv_eval_LOS(gym.Env):
+class USVEnv_eval(gym.Env):
     """
     Custom Environment that follows gym interface for USV adaptive PID controller. Used to evaluate saved models.
     """
@@ -32,12 +33,12 @@ class USVEnv_eval_LOS(gym.Env):
         get_obs: Callable = get_obs,
         get_obs_norm: Callable = get_obs_norm,
         PID: Callable = PID,
-        LOS_guidance: Callable = LOS_guidance,
         otter: Callable = otter,
-        
+        get_current: Callable = get_current,
+        get_current_angle: Callable = get_curr_angle,
         ):
 
-        super(USVEnv_eval_LOS, self).__init__()
+        super(USVEnv_eval, self).__init__()
 
         self.render_mode = render_mode
         self.cfg = config
@@ -46,16 +47,17 @@ class USVEnv_eval_LOS(gym.Env):
         self.get_obs = get_obs
         self.get_obs_norm = get_obs_norm
         self.PID = PID
-        self.LOS_guidance = LOS_guidance
         self.otter = otter
+        self.get_current = get_current
+        self.get_curr_angle = get_current_angle
 
         # initialize anything necessary for environment
         self.num_term = 0
         self.num_trunc = 0
-        self.simData = np.empty([0,21],float)
+        self.simData = np.empty([0,17],float)
         self.t = 0
         self.sampleTime = self.cfg["sim_dt"]
-        self.max_time = self.e_cfg["sim_max_time"]
+        self.max_time = self.cfg["sim_max_time"]
         self.tau_X = self.cfg["tau_X"]  # surge force constant input
         self.Vc = 0
         self.beta_c = 0
@@ -74,14 +76,6 @@ class USVEnv_eval_LOS(gym.Env):
         self.kd_high = self.cfg["Kd_limit"]
 
         self.target_course = self.e_cfg["target_course_angle"]
-        self.path = np.vstack((np.array(self.e_cfg["path_x"]),np.array(self.e_cfg["path_y"])))
-        self.path_idx = 0
-        self.yaw_error = 0
-        self.path_error = 0
-        self.goal = 0
-        self.acc_rad = self.e_cfg["acc_rad"]
-        self.over_dist = self.e_cfg["over_dist"]
-
 
         # Define action and observation space
         # action space is limits on PID coefficients - Kp, Ki, Kd for PID heading controller
@@ -172,41 +166,34 @@ class USVEnv_eval_LOS(gym.Env):
         self.tau_X = self.cfg["tau_X"]
 
         # set water current velocity and angle from eval_config file
-        self.Vc = self.e_cfg["LOS_Vc"]
-        self.beta_c = self.e_cfg["LOS_beta_c"]
+        self.Vc = self.e_cfg["water_curr_vel"]
+        self.beta_c = self.e_cfg["water_curr_angle"][0]
+        [self.current_mag,self.current_angle] = self.get_current(self.Vc,self.cfg["mu"],self.cfg["water_curr_vel_high"],self.cfg["Vmin"],self.beta_c)
 
         # Reset vehicle instance
         self.vehicle = self.otter(tau_X=self.tau_X)
 
         # set initital state of USV
-        init_course_angle = self.e_cfg["LOS_init_crs_angle"]
-        xpos = self.path[0,0]; ypos = self.path[1,0]
-        self.eta = np.array([xpos,ypos,0,0,0,init_course_angle])
+        init_course_angle = self.e_cfg["init_crs_angle"]
+        self.eta = np.array([0,0,0,0,0,init_course_angle])
         self.nu = np.array([0, 0, 0, 0, 0, 0], float) 
         self.nu_dot = np.array([0, 0, 0, 0, 0, 0], float)
         self.u_actual = np.array([0, 0], float)    
         self.u_control = np.array([0, 0], float)  
-        self.yaw_error = self.e_cfg["LOS_init_yaw_err"]
-        self.path_error = self.e_cfg["LOS_init_path_err"]
-        self.path_idx = 0
-        self.goal = 0
-
-        # reset other values
-        self.yaw_err = [0,0,self.yaw_error]
-        self.tau_N = 0
 
         # store simulation data
-        self.simData = np.array(
-            list(self.eta) + list(self.nu) + list(self.u_control) + list(self.u_actual)
-            + [self.t] + [self.yaw_error,self.path_error] + [self.tau_X,self.tau_N]
-        )
+        self.simData = np.array(list(self.eta) + list(self.nu) + list(self.u_control) + list(self.u_actual) + [self.t])
+
+        # reset other values
+        self.yaw_err = [0,0,ssa(self.target_course - self.eta[5])]
+        self.tau_N = 0
 
         # determine observation from initial state
         observation = self.get_obs_norm(self.yaw_err, self.nu, self.nu_dot, self.u_actual, 0, [0,0,0])
 
         # determine info to return
         info = {
-            "Data": self.simData,
+            "Data": [self.eta[5],self.beta_c],
         }
 
         # if self.render_mode == "human":
@@ -221,7 +208,10 @@ class USVEnv_eval_LOS(gym.Env):
         if self.t < 1:
             Vc = 0
         else:
-            Vc = self.Vc
+            Vc = self.current_mag[self.counter+1][0]
+
+        # curr_angle = self.get_curr_angle(self.beta_c)
+        # beta_c = self.current_angle[self.counter+1]
 
         # handling normalized action space
         def kp_norm(norm_action):
@@ -236,7 +226,13 @@ class USVEnv_eval_LOS(gym.Env):
             kd = (norm_action + 1)/2 * self.kd_high
             return kd
         
-        norm_action = np.array([kp_norm(action[0]),ki_norm(action[1]),kd_norm(action[2])])
+        def inc_act(act,base_val):
+            inc = base_val * 0.8 * act
+            return base_val + inc
+        
+        # norm_action = np.array([kp_norm(action[0]),ki_norm(action[1]),kd_norm(action[2])])
+        # uses +/- 80% of tuned PID coefficients
+        norm_action = np.array([inc_act(action[0],414.0),inc_act(action[1],0.001),inc_act(action[2],50.0)])
         
         [self.tau_N,del_tau_N,cont_coeffs] = (
             self.PID(norm_action,self.tau_N,self.yaw_err)
@@ -244,15 +240,12 @@ class USVEnv_eval_LOS(gym.Env):
 
         self.u_control = self.vehicle.controlAllocation(self.tau_X,self.tau_N)
 
-        [self.eta,self.nu,self.u_actual,self.nu_dot] = (
+        [self.eta,self.nu,self.u_actual,self.nu_dot,_] = (
             self.vehicle.dynamics(self.eta,self.nu,self.u_actual,self.u_control,self.sampleTime,Vc,self.beta_c)
         )
 
-        # Use LOS guidance to find yaw error and path error, iterate waypts if reached
-        [self.yaw_error,self.path_error,self.path_idx,self.goal] = self.LOS_guidance(self.path_idx,self.path,self.eta,self.acc_rad,self.over_dist)
-
         # Add to yaw error list, iterate course hold counter if holding
-        self.yaw_err.append(self.yaw_error)
+        self.yaw_err.append(ssa(self.target_course - self.eta[5]))
 
         if abs(self.yaw_err[-1]) <= self.cfg["angle_error_lim"]:
             self.course_hold += 1
@@ -267,11 +260,7 @@ class USVEnv_eval_LOS(gym.Env):
         self.counter += 1
 
         # Store simulation data
-        self.simData = np.vstack(
-            (self.simData,np.array(list(self.eta) + list(self.nu) + list(self.u_control) 
-                + list(self.u_actual) + [self.t] + [self.yaw_error,self.path_error]
-                + [self.tau_X,self.tau_N]))
-            )
+        self.simData = np.vstack((self.simData,np.array(list(self.eta) + list(self.nu) + list(self.u_control) + list(self.u_actual) + [self.t])))
 
         # calculate reward, log on wandb
         [reward,indiv_rew_terms] = self.get_rewards(self.yaw_err,self.simData)
@@ -280,15 +269,15 @@ class USVEnv_eval_LOS(gym.Env):
         self.yaw_e += indiv_rew_terms[0]
         self.prop_act += indiv_rew_terms[1]
         
-        # set terminated criteria - last waypoint in self.path reached 
+        # set terminated criteria - max eval time reached 
         terminated = False
-        if self.goal == 1:
+        if (self.t > self.e_cfg["eval_time"]):
             terminated = True
 
         # set truncated criteria
-        # if over max time
+        # if over max time, if roll/pitch over prescribed limits
         truncated = False
-        if (self.t > self.max_time) or (self.goal == 2):
+        if (self.t > (self.max_time + 10)):
            truncated = True
 
         # set value based on terminated or truncated for episode 
@@ -300,13 +289,13 @@ class USVEnv_eval_LOS(gym.Env):
            
         # determine info to return
         info = {
-            "Data": self.simData,
+            "Data": [self.eta[5],self.beta_c],
         }
 
         return observation, reward, terminated, truncated, info
-
-    def set_path(self, new_path):
-        self.path = new_path
+    
+    def set_beta_c(self, new_beta_c):
+        self.beta_c = new_beta_c
 
 
     def render(self):
@@ -314,6 +303,9 @@ class USVEnv_eval_LOS(gym.Env):
       # State vectors
       x = self.simData[:,0]
       y = self.simData[:,1]
+      psi = self.simData[:,5] * 180/math.pi
+      time = self.simData[:,16]
+      psi_d = np.full(len(psi),self.target_course)
 
       # X, Y position plot
       fig1, ax1 = plt.subplots()
@@ -323,7 +315,18 @@ class USVEnv_eval_LOS(gym.Env):
       ax1.set_title('X-Y Trajectory')
       ax1.grid(True)
 
-      return fig1
+      # Course angle plot
+      fig2, ax2 = plt.subplots()
+      ax2.plot(time,psi)
+      ax2.plot(time,psi_d,'--k')
+      ax2.set_xlabel('Time (s)')
+      ax2.set_ylabel('Course Angle (deg)')
+      ax2.set_ylim(-180, 180)
+      ax2.set_title('Course Angle over Episode')
+      ax2.legend(['Course angle', 'Desired course angle'])
+      ax2.grid(True)
+
+      return fig1, fig2
 
 
     def close(self):
@@ -337,7 +340,7 @@ if __name__ == "__main__":
 
     # SB3 environment check
     # If the environment don't follow the correct interface, an error will be thrown
-    env = USVEnv_eval_LOS()
+    env = USVEnv_eval()
     
     check_env(env, warn=True)
 
@@ -349,7 +352,7 @@ if __name__ == "__main__":
     print(env.action_space)
     print(env.action_space.sample())
 
-    T = 500
+    T = 100
     now = time.time()
     for _ in range(T):
         action = env.action_space.sample()

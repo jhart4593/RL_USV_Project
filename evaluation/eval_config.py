@@ -23,7 +23,7 @@ eval_config = {
         1.22173048,  1.3962634 ,  1.57079633,  1.74532925,  1.91986218,
         2.0943951 ,  2.26892803,  2.44346095,  2.61799388,  2.7925268 ,
         2.96705973],
-    "acc_rad": 2.0,
+    "acc_rad": 1.75,
     "over_dist": 250,
     "LOS_del": 8,
     "LOS_Vc": 0.25,
@@ -31,7 +31,7 @@ eval_config = {
     "LOS_init_crs_angle": math.pi/2,
     "LOS_init_yaw_err": 0.157,
     "LOS_init_path_err": 0.0,
-    "sim_max_time": 3000,
+    "sim_max_time": 3250,
     "eval_steps_LOS": 65000,
     "PID_fixed_coeff": [414,0.001,50]
 

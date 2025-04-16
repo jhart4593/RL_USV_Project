@@ -3,7 +3,7 @@
 
 import wandb
 
-path = "L4DSC_project/USV_env/xlsbgyku"
+path = "L4DSC_project/USV_env/g1bvdv94"
 
 api = wandb.Api()
 run = api.run(path)

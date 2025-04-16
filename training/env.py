@@ -9,10 +9,10 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 from config import config
-from rewards import get_rewards
-from otter import otter
-from utils import get_obs, get_obs_norm, PID, get_current
-from fossen_gnc import ssa
+from utilities.rewards import get_rewards
+from utilities.otter import otter
+from utilities.utils import get_obs, get_obs_norm, PID, get_current
+from utilities.fossen_gnc import ssa
 
 
 class USVEnv(gym.Env):
@@ -228,7 +228,13 @@ class USVEnv(gym.Env):
             kd = (norm_action + 1)/2 * self.kd_high
             return kd
         
-        norm_action = np.array([kp_norm(action[0]),ki_norm(action[1]),kd_norm(action[2])])
+        def inc_act(act,base_val):
+            inc = base_val * 0.8 * act
+            return base_val + inc
+        
+        # norm_action = np.array([kp_norm(action[0]),ki_norm(action[1]),kd_norm(action[2])])
+        # uses +/- 80% of tuned PID coefficients
+        norm_action = np.array([inc_act(action[0],414.0),inc_act(action[1],0.001),inc_act(action[2],50.0)])
         
         [self.tau_N,del_tau_N,cont_coeffs] = (
             self.PID(norm_action,self.tau_N,self.yaw_err)
@@ -236,7 +242,7 @@ class USVEnv(gym.Env):
 
         self.u_control = self.vehicle.controlAllocation(self.tau_X,self.tau_N)
 
-        [self.eta,self.nu,self.u_actual,self.nu_dot] = (
+        [self.eta,self.nu,self.u_actual,self.nu_dot,_] = (
             self.vehicle.dynamics(self.eta,self.nu,self.u_actual,self.u_control,self.sampleTime,Vc,beta_c)
         )
 
@@ -322,7 +328,7 @@ class USVEnv(gym.Env):
       # State vectors
       x = self.simData[:,0]
       y = self.simData[:,1]
-      psi = self.simData[:,5] * 180/math.pi
+      psi = ssa(self.simData[:,5]) * 180/math.pi
       time = self.simData[:,16]
       psi_d = np.full(len(psi),self.target_course)
 

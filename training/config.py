@@ -19,7 +19,7 @@ config = {
     "verbose": 1,
     "rollout_steps": 128,
     "minibatch_size": 32,
-    "model_save_freq": 1_000_000, 
+    "model_save_freq": 500_000, 
 
     # observation space limits
     "vel_lim": 3.1,
@@ -35,9 +35,9 @@ config = {
     "D_limit": 4*math.radians(180),
 
     # PID coefficient limits
-    "Kp_limit": 4000,
-    "Ki_limit": 300,
-    "Kd_limit": 300,
+    "Kp_limit": 1000.0,
+    "Ki_limit": 4.0,
+    "Kd_limit": 100.0,
 
     # reward and truncate limits
     "reward_alpha_coefficient": 0.078125,

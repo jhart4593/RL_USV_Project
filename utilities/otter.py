@@ -225,7 +225,7 @@ class otter:
         [eta,nu,u_actual,nu_dot] = dynamics(eta,nu,u_actual,u_control,sampleTime,Vc,beta_c) 
         integrates the Otter USV equations of motion using Euler's method. Added current
         velocity magnitude (m/s) and current angle (rad) as inputs. Added eta and nu_dot as
-        outputs.
+        outputs. Also added power for each propeller.
         """
 
         # Input vector
@@ -316,7 +316,13 @@ class otter:
 
         u_actual = np.array(n, float)
 
-        return eta, nu, u_actual, nu_dot
+        # calculate power for each propeller (watts)
+        # use 8in as prop OD = 0.2m
+        rho = 1025                # density of water (kg/m^3)
+        torque = self.k_pos*rho*(0.2**5)*(u_actual/(2*math.pi))**2
+        power = u_actual * torque
+
+        return eta, nu, u_actual, nu_dot, power
 
 
     def controlAllocation(self, tau_X, tau_N):

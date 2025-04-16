@@ -1,7 +1,7 @@
 import math
 import numpy as np
-from config import config as cfg
-from eval_config import eval_config as e_cfg
+from training.config import config as cfg
+from evaluation.eval_config import eval_config as e_cfg
 from fossen_gnc import ssa
 from matplotlib import pyplot as plt
 from otter import otter

@@ -1,9 +1,9 @@
 import math
 import numpy as np
-from config import config as cfg
-from eval_config import eval_config as e_cfg
+from training.config import config as cfg
+from evaluation.eval_config import eval_config as e_cfg
 from fossen_gnc import ssa
-from utils import PID_fixed, LOS_guidance, get_current
+from utils import PID_fixed, LOS_guidance, get_current, get_current_LOS
 from otter import otter
 
 
@@ -25,11 +25,11 @@ def step_otter(vehicle,data,sampleTime,yaw_err,Vc,beta_c):
 
     u_control = vehicle.controlAllocation(tau_X,tau_N)
 
-    [eta,nu,u_actual,nu_dot] = (
+    [eta,nu,u_actual,nu_dot,power] = (
         vehicle.dynamics(eta,nu,u_actual,u_control,sampleTime,Vc,beta_c)
     )
 
-    new_data = np.array(list(eta) + list(nu) + list(u_control) + list(u_actual) + [tau_X,tau_N])
+    new_data = np.array(list(eta) + list(nu) + list(u_control) + list(u_actual) + [tau_X,tau_N] + list(power))
 
     return new_data
 
@@ -89,7 +89,7 @@ def sim_otter_course_angle():
         u_control = np.array([0, 0], float)  
 
         # reset other values
-        yaw_err = [0,0,(target_course - eta[5])]
+        yaw_err = [0,0,ssa(target_course - eta[5])]
         tau_N = 0
 
         return curr_vel,vehicle,eta,nu,u_actual,u_control,yaw_err,tau_N
@@ -110,10 +110,12 @@ def sim_otter_course_angle():
                 Vc = 0
             else:
                 Vc = current_mag[ii][0]
+                # Vc = curr_vel
 
             data = step_otter(vehicle,data,sampleTime,yaw_err,Vc,current_angle[ii])
+            # data = step_otter(vehicle,data,sampleTime,yaw_err,Vc,beta_c)
             eta = data[0:6]
-            yaw_err.append(target_course - eta[5])
+            yaw_err.append(ssa(target_course - eta[5]))
 
             simData= np.vstack((simData,np.array(eta[5])))
         
@@ -140,6 +142,7 @@ def sim_otter_LOS(path_x,path_y):
     # set water current velocity and angle from eval_config file
     curr_vel = e_cfg["LOS_Vc"]
     beta_c = e_cfg["LOS_beta_c"]
+    [current_mag,current_angle] = get_current_LOS(curr_vel,cfg["mu"],cfg["water_curr_vel_high"],cfg["Vmin"],beta_c)
 
     vehicle = otter(tau_X=tau_X)
 
@@ -164,7 +167,7 @@ def sim_otter_LOS(path_x,path_y):
 
     simData = np.array(
     list(eta) + list(nu) + list(u_control) + list(u_actual)
-    + [t] + [yaw_error,path_error] + [tau_X,tau_N]
+    + [t] + [yaw_error,path_error] + [tau_X,tau_N] + [0,0]
     )
 
     for ii in range(num_steps):
@@ -172,9 +175,11 @@ def sim_otter_LOS(path_x,path_y):
         if t < 1:
                 Vc = 0
         else:
-            Vc = curr_vel
+            # Vc = curr_vel
+            Vc = current_mag[ii][0]
 
-        data = step_otter(vehicle,data,sampleTime,yaw_err,Vc,beta_c)
+        # data = step_otter(vehicle,data,sampleTime,yaw_err,Vc,beta_c)
+        data = step_otter(vehicle,data,sampleTime,yaw_err,Vc,current_angle[ii])
 
         tau_N = data[17]
         tau_X = data[16]
@@ -182,6 +187,7 @@ def sim_otter_LOS(path_x,path_y):
         nu = data[6:12]
         u_control = data[12:14]
         u_actual = data[14:16]
+        power = data[18:20]
 
         [yaw_error,path_error,path_idx,goal] = LOS_guidance(path_idx,path,eta,acc_rad,over_dist)
 
@@ -191,7 +197,7 @@ def sim_otter_LOS(path_x,path_y):
         simData = np.vstack(
             (simData,np.array(list(eta) + list(nu) + list(u_control) 
                 + list(u_actual) + [t] + [yaw_error,path_error]
-                + [tau_X,tau_N]))
+                + [tau_X,tau_N] + list(power)))
         )
 
         if goal != 0:

@@ -116,6 +116,8 @@ def plotCourseAngle_PID(simData_f,simTime_f,target_course):
     psi_d2 = np.full(len(psi2_f),target_course)
 
     plt.figure(1)
+    plt.suptitle('Fixed PID with Constant Disturbance Magnitude')
+
     plt.subplot(211)
     plt.plot(time1_f,psi1_f)
     plt.plot(time1_f,psi_d1,'--k')
@@ -125,7 +127,7 @@ def plotCourseAngle_PID(simData_f,simTime_f,target_course):
     plt.xlim(0,80)
     plt.ylim(-45, 180)
     # plt.title('Course Angle over Episode')
-    plt.legend(['PPO','PID','Target course angle'])
+    plt.legend(['PID','Target course angle'])
     plt.grid(True)
 
     plt.subplot(212)
@@ -141,7 +143,9 @@ def plotCourseAngle_PID(simData_f,simTime_f,target_course):
     plt.grid(True)
 
     plt.tight_layout()
-    plt.show()
+    plt.savefig('1_course_angle_PID.png')
+    # plt.show()
+    plt.close()
 
 
 def plotActionsCourseAngle(kp,ki,kd,simTime):
@@ -225,32 +229,33 @@ def plotTraj(simData,simTime,simData_f,simTime_f,path_x,path_y,pref,suf):
     # PPO
     plt.figure(3)
     plt.plot(simTime,yaw_err)
-    plt.xlabel('Time (s)')
-    plt.ylabel('Course Angle Error (deg)')
-    # plt.title('Course Angle Error')
-    plt.grid(True)
-    plt.legend(['PPO-PID'])
-    # plt.xlim(-600,600)
-    # plt.ylim(-600,600)
-
-    plt.savefig(pref + '_PPO_course_angle_err_' + suf + '.png')
-    # plt.show()
-    plt.close()
-
-    # PID
-    plt.figure(4)
     plt.plot(simTime_f,yaw_err_f,'g')
     plt.xlabel('Time (s)')
     plt.ylabel('Course Angle Error (deg)')
     # plt.title('Course Angle Error')
     plt.grid(True)
-    plt.legend(['PID'])
+    plt.legend(['PPO-PID','PID'])
     # plt.xlim(-600,600)
     # plt.ylim(-600,600)
 
-    plt.savefig(pref + '_PID_course_angle_err_' + suf + '.png')
+    plt.savefig(pref + '_course_angle_err_' + suf + '.png')
     # plt.show()
     plt.close()
+
+    # # PID
+    # plt.figure(4)
+    # plt.plot(simTime_f,yaw_err_f,'g')
+    # plt.xlabel('Time (s)')
+    # plt.ylabel('Course Angle Error (deg)')
+    # # plt.title('Course Angle Error')
+    # plt.grid(True)
+    # plt.legend(['PID'])
+    # # plt.xlim(-600,600)
+    # # plt.ylim(-600,600)
+
+    # plt.savefig(pref + '_PID_course_angle_err_' + suf + '.png')
+    # # plt.show()
+    # plt.close()
 
     # Path error----------------------------------------------------------
     path_err = simData[:,18]
@@ -259,30 +264,75 @@ def plotTraj(simData,simTime,simData_f,simTime_f,path_x,path_y,pref,suf):
     # PPO
     plt.figure(5)
     plt.plot(simTime,path_err)
-    plt.xlabel('Time (s)')
-    plt.ylabel('Trajectory Error (m)')
-    # plt.title('Trajectory Error')
-    plt.grid(True)
-    plt.legend(['PPO-PID'])
-    # plt.xlim(-600,600)
-    # plt.ylim(-600,600)
-
-    plt.savefig(pref + '_PPO_path_err_' + suf + '.png')
-    # plt.show()
-    plt.close()
-
-    # PID
-    plt.figure(6)
     plt.plot(simTime_f,path_err_f,'g')
     plt.xlabel('Time (s)')
     plt.ylabel('Trajectory Error (m)')
     # plt.title('Trajectory Error')
     plt.grid(True)
-    plt.legend(['PID'])
+    plt.legend(['PPO-PID','PID'])
     # plt.xlim(-600,600)
     # plt.ylim(-600,600)
 
-    plt.savefig(pref + '_PID_path_err_' + suf + '.png')
+    plt.savefig(pref + '_path_err_' + suf + '.png')
+    # plt.show()
+    plt.close()
+
+    # # PID
+    # plt.figure(6)
+    # plt.plot(simTime_f,path_err_f,'g')
+    # plt.xlabel('Time (s)')
+    # plt.ylabel('Trajectory Error (m)')
+    # # plt.title('Trajectory Error')
+    # plt.grid(True)
+    # plt.legend(['PID'])
+    # # plt.xlim(-600,600)
+    # # plt.ylim(-600,600)
+
+    # plt.savefig(pref + '_PID_path_err_' + suf + '.png')
+    # # plt.show()
+    # plt.close()
+
+    # Power consumption ----------------------------------------------------------
+    power = simData[:,21] + simData[:,22]
+    power_f = simData_f[:,21] + simData_f[:,22]
+
+    power_total = [power[0]]
+    for ii in range(1,len(power)):
+        power_total.append(power_total[ii-1]+power[ii])
+
+    power_total_f = [power_f[0]]
+    for jj in range(1,len(power_f)):
+        power_total_f.append(power_total_f[jj-1]+power_f[jj])
+
+    # total power consumed
+    plt.figure(7)
+    plt.plot(simTime,power_total)
+    plt.plot(simTime_f,power_total_f,'g')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Total Power Consumed (watts)')
+    # plt.title('Trajectory Error')
+    plt.grid(True)
+    plt.legend(['PPO-PID','PID'])
+    # plt.xlim(-600,600)
+    # plt.ylim(-600,600)
+
+    plt.savefig(pref + '_power_' + suf + '.png')
+    # plt.show()
+    plt.close()
+
+    # power consumed per time step
+    plt.figure(8)
+    plt.plot(simTime,power)
+    plt.plot(simTime_f,power_f,'g')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Power Consumed Per Time Step (watts)')
+    # plt.title('Trajectory Error')
+    plt.grid(True)
+    plt.legend(['PPO-PID','PID'])
+    # plt.xlim(-600,600)
+    # plt.ylim(-600,600)
+
+    plt.savefig(pref + '_power_step_' + suf + '.png')
     # plt.show()
     plt.close()
 
@@ -395,7 +445,7 @@ def plotControls(simData,simTime,pref,suf):
     plt.plot(simTime,u_actual1)
     # plt.xlim(0,90)
     # plt.ylim(-45, 180)
-    plt.legend(['Left Prop Rev Cmd (rpm)','Left Prop Rev Actual (rpm)'])
+    plt.legend(['Left Prop Rev Cmd (rad/s)','Left Prop Rev Actual (rad/s)'])
     plt.grid(True)
 
     # surge control force
@@ -412,7 +462,7 @@ def plotControls(simData,simTime,pref,suf):
     plt.plot(simTime,u_actual2)
     # plt.xlim(0,90)
     # plt.ylim(-45, 180)
-    plt.legend(['Right Prop Rev Cmd (rpm)','Right Prop Rev Actual (rpm)'])
+    plt.legend(['Right Prop Rev Cmd (rad/s)','Right Prop Rev Actual (rad/s)'])
     plt.grid(True)
     plt.xlabel('Time (s)')
 

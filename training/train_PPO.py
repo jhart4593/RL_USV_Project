@@ -9,7 +9,7 @@ import traceback
 
 from config import config 
 from env import USVEnv
-import rewards
+import utilities.rewards
 
 run = wandb.init(
     project="USV_env",
