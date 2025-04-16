@@ -7,5 +7,8 @@ Unmanned Surface Vehicles (USVs) are being used across an array of industries, t
 Reference 'requirements' text file for necessary packages to install for the code to run.
 
 ## Code Organization
+All code for training of the RL agent is within the 'training' folder. The code for evaluation of the learned RL policy is located within the 'evaluation' folder. The 'utilities' folder houses all of the supporting Python scripts to include the USV simulator, reward function, and plotting utilities.
 
 ## Running the Code
+1. Run train_PPO script in 'training' folder to train an RL agent. Change parameters of the training in the config file within the same folder.
+2. Run the evaluate script within the 'evaluation' folder to generate plots comparing a fixed PID controller to the PPO-PID controller. Parameters for the evaluation are adjusted in the eval_config file in the same folder.
